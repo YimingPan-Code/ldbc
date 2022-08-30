@@ -1,0 +1,152 @@
+DROP ALL 
+
+# Vertices 
+
+## Message 
+CREATE VERTEX Comment (PRIMARY_ID id UINT, browserUsed STRING, creationDate DATETIME, locationIP STRING, content STRING, length UINT) WITH primary_id_as_attribute="TRUE" 
+CREATE VERTEX Post (PRIMARY_ID id UINT, browserUsed STRING, creationDate DATETIME, locationIP STRING, content STRING, length UINT, language STRING, imageFile STRING) WITH primary_id_as_attribute="TRUE" 
+
+## Organisation 
+CREATE VERTEX Company (PRIMARY_ID id UINT, name STRING, url STRING) WITH primary_id_as_attribute="TRUE" 
+CREATE VERTEX University (PRIMARY_ID id UINT, name STRING, url STRING) WITH primary_id_as_attribute="TRUE" 
+
+## Place 
+CREATE VERTEX City (PRIMARY_ID id UINT, name STRING, url STRING) WITH primary_id_as_attribute="TRUE" 
+CREATE VERTEX Country (PRIMARY_ID id UINT, name STRING, url STRING) WITH primary_id_as_attribute="TRUE" CREATE VERTEX Continent (PRIMARY_ID id UINT, name STRING, url STRING) WITH primary_id_as_attribute="TRUE" 
+
+## Others 
+CREATE VERTEX Forum (PRIMARY_ID id UINT, title STRING, creationDate DATETIME) WITH primary_id_as_attribute="TRUE" 
+CREATE VERTEX Person (PRIMARY_ID id UINT, firstName STRING, lastName STRING, gender STRING, birthday DATETIME, email SET<STRING>, speaks SET<STRING>, browserUsed STRING, locationIP STRING, creationDate DATETIME) WITH primary_id_as_attribute="TRUE" 
+CREATE VERTEX Tag (PRIMARY_ID id UINT, name STRING, url STRING) WITH primary_id_as_attribute="TRUE" 
+CREATE VERTEX TagClass (PRIMARY_ID id UINT, name STRING, url STRING) WITH primary_id_as_attribute="TRUE" 
+
+# Edges 
+
+CREATE DIRECTED EDGE CONTAINER_OF (FROM Forum, TO Post) WITH REVERSE_EDGE="CONTAINER_OF_REVERSE" 
+CREATE DIRECTED EDGE HAS_CREATOR (FROM Comment|Post, TO Person) WITH REVERSE_EDGE="HAS_CREATOR_REVERSE" 
+CREATE DIRECTED EDGE HAS_INTEREST (FROM Person, TO Tag) WITH REVERSE_EDGE="HAS_INTEREST_REVERSE" CREATE DIRECTED EDGE HAS_MEMBER (FROM Forum, TO Person, creationDate DATETIME) WITH REVERSE_EDGE="HAS_MEMBER_REVERSE" 
+CREATE DIRECTED EDGE HAS_MODERATOR (FROM Forum, TO Person) WITH REVERSE_EDGE="HAS_MODERATOR_REVERSE" 
+CREATE DIRECTED EDGE HAS_TAG (FROM Comment|Post|Forum, TO Tag) WITH REVERSE_EDGE="HAS_TAG_REVERSE" CREATE DIRECTED EDGE HAS_TYPE (FROM Tag, TO TagClass) WITH REVERSE_EDGE="HAS_TYPE_REVERSE" 
+CREATE DIRECTED EDGE IS_LOCATED_IN (FROM Company, TO Country | FROM Comment, TO Country | FROM Post, TO Country | FROM Person, TO City | FROM University, TO City) WITH REVERSE_EDGE="IS_LOCATED_IN_REVERSE" CREATE DIRECTED EDGE IS_PART_OF (FROM City, TO Country | FROM Country, TO Continent) WITH REVERSE_EDGE="IS_PART_OF_REVERSE" 
+CREATE DIRECTED EDGE IS_SUBCLASS_OF (FROM TagClass, TO TagClass) WITH REVERSE_EDGE="IS_SUBCLASS_OF_REVERSE" CREATE UNDIRECTED EDGE KNOWS (FROM Person, TO Person, creationDate DATETIME) 
+CREATE DIRECTED EDGE LIKES (FROM Person, TO Comment|Post, creationDate DATETIME) WITH REVERSE_EDGE="LIKES_REVERSE" 
+CREATE DIRECTED EDGE REPLY_OF (FROM Comment, TO Comment|Post) WITH REVERSE_EDGE="REPLY_OF_REVERSE" CREATE DIRECTED EDGE STUDY_AT (FROM Person, TO University, classYear INT) WITH REVERSE_EDGE="STUDY_AT_REVERSE" 
+CREATE DIRECTED EDGE WORK_AT (FROM Person, TO Company, workFrom INT) WITH REVERSE_EDGE="WORK_AT_REVERSE"
+
+CREATE GRAPH ldbc_snb (*)
+
+USE GRAPH ldbc_snb
+# loading
+BEGIN
+CREATE LOADING JOB load_ldbc FOR GRAPH ldbc_snb{
+DEFINE FILENAME comment="/home/ubuntu/test_data/dynamic/comment_0_0.csv";
+DEFINE FILENAME commentc="/home/ubuntu/test_data/dynamic/comment_hasCreator_person_0_0.csv";
+DEFINE FILENAME commentt="/home/ubuntu/test_data/dynamic/comment_hasTag_tag_0_0.csv";
+DEFINE FILENAME commentl="/home/ubuntu/test_data/dynamic/comment_isLocatedIn_place_0_0.csv";
+DEFINE FILENAME commentrc="/home/ubuntu/test_data/dynamic/comment_replyOf_comment_0_0.csv";
+DEFINE FILENAME commentrp="/home/ubuntu/test_data/dynamic/comment_replyOf_post_0_0.csv";
+DEFINE FILENAME forum="/home/ubuntu/test_data/dynamic/forum_0_0.csv";
+DEFINE FILENAME forumcon="/home/ubuntu/test_data/dynamic/forum_containerOf_post_0_0.csv";
+DEFINE FILENAME forumhasm="/home/ubuntu/test_data/dynamic/forum_hasMember_person_0_0.csv";
+DEFINE FILENAME forumhasmo="/home/ubuntu/test_data/dynamic/forum_hasModerator_person_0_0.csv";
+DEFINE FILENAME forumhast="/home/ubuntu/test_data/dynamic/forum_hasTag_tag_0_0.csv";
+DEFINE FILENAME person="/home/ubuntu/test_data/dynamic/person_0_0.csv";
+DEFINE FILENAME personemail="/home/ubuntu/test_data/dynamic/person_email_emailaddress_0_0.csv";
+DEFINE FILENAME personhasin="/home/ubuntu/test_data/dynamic/person_hasInterest_tag_0_0.csv";
+DEFINE FILENAME personisloca="/home/ubuntu/test_data/dynamic/person_isLocatedIn_place_0_0.csv";
+DEFINE FILENAME personknows="/home/ubuntu/test_data/dynamic/person_knows_person_0_0.csv";
+DEFINE FILENAME personlikescom="/home/ubuntu/test_data/dynamic/person_likes_comment_0_0.csv";
+DEFINE FILENAME personlikespost="/home/ubuntu/test_data/dynamic/person_likes_post_0_0.csv";
+DEFINE FILENAME personspeak="/home/ubuntu/test_data/dynamic/person_speaks_language_0_0.csv";
+DEFINE FILENAME personstudy="/home/ubuntu/test_data/dynamic/person_studyAt_organisation_0_0.csv";
+DEFINE FILENAME personwork="/home/ubuntu/test_data/dynamic/person_workAt_organisation_0_0.csv";
+DEFINE FILENAME post="/home/ubuntu/test_data/dynamic/post_0_0.csv";
+DEFINE FILENAME postcre="/home/ubuntu/test_data/dynamic/post_hasCreator_person_0_0.csv";
+DEFINE FILENAME posttag="/home/ubuntu/test_data/dynamic/post_hasTag_tag_0_0.csv";
+DEFINE FILENAME postloc="/home/ubuntu/test_data/dynamic/post_isLocatedIn_place_0_0.csv";
+DEFINE FILENAME organisation="/home/ubuntu/test_data/static/organisation_0_0.csv";
+DEFINE FILENAME organisationloc="/home/ubuntu/test_data/static/organisation_isLocatedIn_place_0_0.csv";
+DEFINE FILENAME place="/home/ubuntu/test_data/static/place_0_0.csv";
+DEFINE FILENAME placeis="/home/ubuntu/test_data/static/place_isPartOf_place_0_0.csv";
+DEFINE FILENAME tag="/home/ubuntu/test_data/static/tag_0_0.csv";
+DEFINE FILENAME tagcalss="/home/ubuntu/test_data/static/tagclass_0_0.csv";
+DEFINE FILENAME tagsub="/home/ubuntu/test_data/static/tagclass_isSubclassOf_tagclass_0_0.csv";
+DEFINE FILENAME tagtype="/home/ubuntu/test_data/static/tag_hasType_tagclass_0_0.csv";
+LOAD comment TO VERTEX Comment VALUES($0,$3,$1,$2,$4,$5)
+USING header="true",separator="|";
+LOAD commentc TO EDGE HAS_CREATOR VALUES($0 Comment,$1 Person)
+USING header="true",separator="|";
+LOAD commentt TO EDGE HAS_TAG VALUES($0 Comment,$1 Tag)
+USING header="true",separator="|";
+LOAD commentl TO EDGE IS_LOCATED_IN VALUES($0 Comment,$1 Country)
+USING header="true",separator="|";
+LOAD commentrc TO EDGE REPLY_OF VALUES($0 Comment,$1 Comment)
+USING header="true",separator="|";
+LOAD commentrp TO EDGE REPLY_OF VALUES($0 Comment,$1 Post)
+USING header="true",separator="|";
+LOAD forum TO VERTEX Forum VALUES($0,$1,$2)
+USING header="true",separator="|";
+LOAD forumcon TO EDGE CONTAINER_OF VALUES($0,$1)
+USING header="true",separator="|";
+LOAD forumhasm TO EDGE HAS_MEMBER VALUES($0,$1,$2)
+USING header="true",separator="|";
+LOAD forumhasmo TO EDGE HAS_MODERATOR VALUES($0,$1)
+USING header="true",separator="|";
+LOAD forumhast TO EDGE HAS_TAG VALUES($0 Forum,$1 Tag)
+USING header="true",separator="|";
+LOAD person TO VERTEX Person VALUES($0,$1,$2,$3,$4,_,_,$7,$6,$5)
+USING header="true",separator="|";
+LOAD personemail TO VERTEX Person VALUES($0,_,_,_,_,$1,_,_,_,_)
+USING header="true",separator="|";
+LOAD personhasin TO EDGE HAS_INTEREST VALUES($0 Person,$1 Tag)
+USING header="true",separator="|";
+LOAD personisloca TO EDGE IS_LOCATED_IN VALUES($0 Person,$1 City)
+USING header="true",separator="|";
+LOAD personknows TO EDGE KNOWS VALUES($0,$1,$2)
+USING header="true",separator="|";
+LOAD personlikescom TO EDGE LIKES VALUES($0 Person,$1 Comment,$2)
+USING header="true",separator="|";
+LOAD personlikespost TO EDGE LIKES VALUES($0 Person,$1 Post,$2)
+USING header="true",separator="|";
+LOAD personspeak TO VERTEX Person VALUES($0,_,_,_,_,_,$1,_,_,_)
+USING header="true",separator="|";
+LOAD personstudy TO EDGE STUDY_AT VALUES($0,$1,$2)
+USING header="true",separator="|";
+LOAD personwork TO EDGE WORK_AT VALUES($0,$1,$2)
+USING header="true",separator="|";
+LOAD post TO VERTEX Post VALUES($0,$4,$2,$3,$6,$7,$5,$1)
+USING header="true",separator="|";
+LOAD postcre TO EDGE HAS_CREATOR VALUES($0 Post,$1 Person)
+USING header="true",separator="|";
+LOAD posttag TO EDGE HAS_TAG VALUES($0 Post,$1 Tag)
+USING header="true",separator="|";
+LOAD postloc TO EDGE IS_LOCATED_IN VALUES($0 Post,$1 Country)
+USING header="true",separator="|";
+LOAD organisation 
+TO VERTEX Company VALUES ($0, $2, $3) WHERE $1 == "Company", 
+TO VERTEX University VALUES ($0, $2, $3) WHERE $1 == "University"
+USING header="true",separator="|";
+LOAD organisationloc
+TO EDGE IS_LOCATED_IN Values ($0 Company, $1 Country), 
+TO EDGE IS_LOCATED_IN Values ($0 University, $1 City) 
+USING header="true",separator="|";
+LOAD place 
+TO VERTEX Continent VALUES ($0, $1, $2) WHERE $3 == "Continent", 
+TO VERTEX Country VALUES ($0, $1, $2) WHERE $3 == "Country", 
+TO VERTEX City VALUES ($0, $1, $2) WHERE $3 == "City"  
+USING header="true",separator="|";
+LOAD placeis  
+TO EDGE IS_PART_OF VALUES ($0 Country, $1 Continent),
+TO EDGE IS_PART_OF VALUES ($0 City, $1 Country) 
+USING header="true",separator="|";
+LOAD tag TO VERTEX Tag VALUES($0,$1,$2)
+USING header="true",separator="|";
+LOAD tagcalss TO VERTEX TagClass VALUES($0,$1,$2)
+USING header="true",separator="|";
+LOAD tagsub TO EDGE IS_SUBCLASS_OF VALUES($0,$1)
+USING header="true",separator="|";
+LOAD tagtype TO EDGE HAS_TYPE VALUES($0,$1)
+USING header="true",separator="|";
+}
+END
+RUN LOADING JOB load_ldbc
